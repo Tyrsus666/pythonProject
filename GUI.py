@@ -15,18 +15,20 @@ def callback(*args):
     showKD()
     showGov()
 
-number = 450
 
 ##### GUI #####
 
 # window
 mainWin = Tk()
 mainWin.title('SKDAS')
+mainWin.geometry('500x200')
 
 # variables
 kingdom = StringVar()
+kingdom.set('2041') # devault kingdom
 Governor = StringVar()
 governor = StringVar()
+governor.set('450') # devault value
 Kingdom = StringVar()
 
 # left frame
@@ -49,24 +51,24 @@ button1 = ttk.Button(leftFrame, text='Scan', command=lambda: [showKD(), showGov(
 button1.grid(column=0, row=4)
 
 # right frame
-rightFrame = ttk.Frame(mainWin, borderwidth=50, relief='sunken', width=200, height=150, padding='10 10 10 10')
+rightFrame = ttk.Frame(mainWin, borderwidth=5, relief='sunken', width=300, height=150)
 rightFrame.grid_propagate(0)
 rightFrame.grid(row=0, column=1)
 
 # right content
-label3 = ttk.Label(rightFrame, text='Your Kingdom is:')
-label3.grid(column=0, row=0)
+label3 = ttk.Label(rightFrame, text='Name:')
+label3.grid(column=0, row=0, sticky=W, ipadx=5)
 label4 = ttk.Label(rightFrame, textvariable=Kingdom)
-label4.grid(column=0, row=1)
-label5 = ttk.Label(rightFrame, text='Governors to scan:')
-label5.grid(column=0, row=2)
+label4.grid(column=1, row=0)
+label5 = ttk.Label(rightFrame, text='ID:')
+label5.grid(column=0, row=1, sticky=W)
 label6 = ttk.Label(rightFrame, textvariable=Governor)
-label6.grid(column=0, row=3)
+label6.grid(column=1, row=1)
 
 
 # progressbar
 progress = ttk.Progressbar(mainWin, orient=HORIZONTAL, length=450, mode='determinate')
-progress.grid(column=0, row=1, columnspan=2)
+progress.grid(column=0, row=1, columnspan=2, pady=10)
 
 
 # using keyboard return
