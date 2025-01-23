@@ -16,6 +16,13 @@ def read_config():
     config_values = {'kingdom': kingdom, 'governor': governor}
     return config_values
 
+def update_config(*args):
+    config = configparser.ConfigParser()
+    config.set('General', 'kingdom', kingdom.get())
+    config.set('General', 'scans', governor.get())
+    with open('config.ini', 'w') as config_file:
+        config.write(config_file)
+
 if __name__ == "__main__":
     config_data = read_config()
 
@@ -61,7 +68,7 @@ label2.grid(column=0, row=2)
 entry_Gov = ttk.Entry(leftFrame, textvariable=governor, width=4)
 entry_Gov.grid(column=0, row=3)
 
-button1 = ttk.Button(leftFrame, text='Scan', command=lambda: [showKD(), showGov()])
+button1 = ttk.Button(leftFrame, text='Scan', command=lambda: [showKD(), showGov(), update_config()])
 button1.grid(column=0, row=4)
 
 # right frame
