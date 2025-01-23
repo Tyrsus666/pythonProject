@@ -3,7 +3,21 @@
 # GUI.py
 from tkinter import *
 from tkinter import ttk
+import configparser
 import time
+
+
+def read_config():
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    kingdom = config.get('General','kingdom')
+    governor = config.get('General','scans')
+
+    config_values = {'kingdom': kingdom, 'governor': governor}
+    return config_values
+
+if __name__ == "__main__":
+    config_data = read_config()
 
 def showKD(*args):
     Kingdom.set(kingdom.get())
@@ -25,10 +39,10 @@ mainWin.geometry('500x200')
 
 # variables
 kingdom = StringVar()
-kingdom.set('2041') # devault kingdom
+kingdom.set(config_data['kingdom']) # devault kingdom
 Governor = StringVar()
 governor = StringVar()
-governor.set('450') # devault value
+governor.set(config_data['governor']) # devault value
 Kingdom = StringVar()
 
 # left frame
