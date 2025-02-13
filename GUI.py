@@ -4,14 +4,17 @@
 from tkinter import *
 from tkinter import ttk
 import configparser
+import requests
+import json
 import time
+import webbrowser
 
 
 def read_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
-    kingdom = config.get('General','kingdom')
-    governor = config.get('General','scans')
+    kingdom = config.get('General', 'kingdom')
+    governor = config.get('General', 'scans')
 
     config_values = {'kingdom': kingdom, 'governor': governor}
     return config_values
@@ -23,6 +26,23 @@ def update_config(*args):
     config.set('General', 'scans', governor.get())
     with open('config.ini', 'w') as config_file:
         config.write(config_file)
+
+def version_check(repo_owner , repo_name, local_version):
+    url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest'
+    response = requests.get(url)
+    response.raise_for_status()
+    release_data = response.json()
+    github_version = release_data['name']
+    if local_version != github_version:
+        button3 = ttk.Button(leftFrame, text='Update available.', command=lambda: webbrowser.open("https://github.com/Tyrsus666/pythonProject"))
+        button3.grid(column=0, row=5, columnspan=2, pady=5)
+
+
+
+repo_owner = 'Tyrsus666'
+repo_name = 'pythonProject'
+local_version = 'Version 1.1'
+
 
 if __name__ == "__main__":
     config_data = read_config()
@@ -127,6 +147,7 @@ label21.grid(column=0, row=9, sticky=W)
 progress = ttk.Progressbar(mainWin, orient=HORIZONTAL, length=450, mode='determinate')
 progress.grid(column=0, row=1, columnspan=2, pady=10)
 
+result = version_check(repo_owner, repo_name, local_version)
 
 # using keyboard return
 mainWin.bind('<Return>', callback)
