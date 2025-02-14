@@ -47,16 +47,36 @@ local_version = 'Version 1.1'
 if __name__ == "__main__":
     config_data = read_config()
 
-def showKD(*args):
-    Kingdom.set(kingdom.get())
 
-def showGov(*args):
-    Governor.set(governor.get())
+today = date.today()
+Y = [285, 390, 490, 590, 605]  # Positions for governors
+
+def tointcheck(element):
+    try:
+        return int(element)
+    except ValueError:
+        return element
+
+def tointprint(element):
+    try:
+        return f'{int(element):,}'
+    except ValueError:
+        return str(element)
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
+
+
+def scan():
+
 
 def callback(*args):
-    showKD()
-    showGov()
     update_config()
+
+
+
 
 
 ##### GUI #####
