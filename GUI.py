@@ -8,8 +8,28 @@ import requests
 import json
 import time
 import webbrowser
+import os
+import sys
+import traceback
+from datetime import date
+from ppadb.client import Client
+import cv2
+import numpy as np
+from PIL import Image
+import pytesseract
+import xlwt
+import keyboard
+import random
 
+# variables
+repo_owner = 'Tyrsus666'
+repo_name = 'pythonProject'
+local_version = 'Version 1.0'
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+today = date.today()
+Y = [285, 390, 490, 590, 605]  # Positions for governors
 
+##### functions #####
 def read_config():
     config = configparser.ConfigParser()
     config.read('config.ini')
@@ -34,14 +54,27 @@ def version_check(repo_owner , repo_name, local_version):
     release_data = response.json()
     github_version = release_data['name']
     if local_version != github_version:
-        button3 = ttk.Button(leftFrame, text='Update available.', command=lambda: webbrowser.open("https://github.com/Tyrsus666/pythonProject"))
+        button3 = ttk.Button(leftFrame, text='Update available', command=lambda: webbrowser.open("https://github.com/Tyrsus666/pythonProject"))
         button3.grid(column=0, row=5, columnspan=2, pady=5)
 
+def tointcheck(element):
+    try:
+        return int(element)
+    except ValueError:
+        return element
+
+def tointprint(element):
+    try:
+        return f'{int(element):,}'
+    except ValueError:
+        return str(element)
+
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
-repo_owner = 'Tyrsus666'
-repo_name = 'pythonProject'
-local_version = 'Version 1.1'
 
 
 if __name__ == "__main__":
