@@ -51,12 +51,13 @@ adb = '1'
 device = '1'
 
 
+
 def update_config(*args):
     config = configparser.ConfigParser()
     config.add_section('General')
     config.set('General', 'kingdom', kingdom.get())
     config.set('General', 'search_range', search_range.get())
-    config.set('General', 'port', '5695')
+    config.set('General', 'port', port.get())
     with open('config.ini', 'w') as config_file:
         config.write(config_file)
 
@@ -120,8 +121,11 @@ def gui():
     mainWin.geometry('500x250')
 
     # variables
+    global port
     global kingdom
     global search_range
+    port = StringVar()
+    port.set(config_data['port'])
     kingdom = StringVar()
     kingdom.set(config_data['kingdom'])  # default kingdom
     search_range = StringVar()
@@ -133,20 +137,24 @@ def gui():
     leftFrame.grid(row=0, column=0)
 
     # left content
-    label1 = ttk.Label(leftFrame, text='Select your Kingdom:')
-    label1.grid(column=0, row=0, columnspan=2)
+    label0 = ttk.Label(leftFrame, text='Port:')
+    label0.grid(column=0, row=0, pady=5)
+    entry_port = ttk.Entry(leftFrame, textvariable=port, width=4)
+    entry_port.grid(column=1, row=0, pady=5, sticky=W)
+    label1 = ttk.Label(leftFrame, text='Kingdom:')
+    label1.grid(column=0, row=1, pady=5)
     entry_KD = ttk.Entry(leftFrame, textvariable=kingdom, width=4)
-    entry_KD.grid(column=0, row=1, columnspan=2)
+    entry_KD.grid(column=1, row=1, pady=5, sticky=W)
     entry_KD.focus_set()
-    label2 = ttk.Label(leftFrame, text='Governors to scan:')
-    label2.grid(column=0, row=2, columnspan=2)
+    label2 = ttk.Label(leftFrame, text='Search range:')
+    label2.grid(column=0, row=2, pady=5)
     entry_Gov = ttk.Entry(leftFrame, textvariable=search_range, width=4)
-    entry_Gov.grid(column=0, row=3, columnspan=2)
+    entry_Gov.grid(column=1, row=2, pady=5, sticky=W)
 
     button1 = ttk.Button(leftFrame, text='Scan', command=lambda: [callback()])
-    button1.grid(column=0, row=4, pady=5)
+    button1.grid(column=0, row=6, pady=5)
     button2 = ttk.Button(leftFrame, text='Cancel', command=lambda: [mainWin.destroy()])
-    button2.grid(column=1, row=4, pady=5)
+    button2.grid(column=1, row=6, pady=5)
 
     # version check
     url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest'
@@ -157,7 +165,7 @@ def gui():
     if local_version != github_version:  # if version is outdated show button
         button3 = ttk.Button(leftFrame, text='Update available',
                              command=lambda: webbrowser.open("https://github.com/Tyrsus666/pythonProject"))
-        button3.grid(column=0, row=5, columnspan=2, pady=5)
+        button3.grid(column=0, row=7, columnspan=2, pady=5)
 
     # right frame
     rightFrame = ttk.Frame(mainWin, borderwidth=5, relief='sunken', width=300, height=200)
@@ -215,6 +223,80 @@ def gui():
 
     mainWin.mainloop()
 
+def setup_excel():
+    wb = xlwt.Workbook()
+    sheet1 = wb.add_sheet(str(today))
+    style = xlwt.XFStyle()
+    font = xlwt.Font()
+    font.bold = True
+    style.font = font
+
+    headers = ['Date', 'Kingdom', 'Governor Name', 'Governor ID', 'Power', 'Kill Points', 'Deads', 'Tier 1 Kills', 'Tier 2 Kills', 'Tier 3 Kills', 'Tier 4 Kills', 'Tier 5 Kills', 'Rss Assistance', 'Alliance Helps', 'Alliance','KvK Kills High', 'KvK Deads High', 'KvK Severely Wounds High']
+    for col, header in enumerate(headers):
+        sheet1.write(0, col, header, style)
+    return wb, sheet1
+
+def capture_image(device, filename):
+    image = device.screencap()
+    with open(filename, 'wb') as f:
+        f.write(image)
+    return
+
+def random_time(max_pause: float):
+    min_pause = max_pause * 2 / 3
+    sleep_time = random.uniform(min_pause, max_pause)
+    time.sleep(sleep_time)
+
+
+def preprocess_image(filename, roi):
+    img = cv2.imread(filename)
+
+    # Crop the image based on ROI
+    x, y, w, h = roi
+    cropped_image = img[y:y + h, x:x + w]
+
+    # Convert to grayscale
+    gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+
+    # Improved preprocessing for better OCR accuracy
+    _, binary_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+    return binary_image
+
+
+def preprocess_image2(filename, roi):
+    img = cv2.imread(filename)
+
+    # Crop the image based on ROI
+    x, y, w, h = roi
+    cropped_image = img[y:y + h, x:x + w]
+
+    # Convert to grayscale
+    gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+
+    # Improved preprocessing for better OCR accuracy
+    _, binary_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    return binary_image
+
+
+def preprocess_image3(filename, roi):
+    img = cv2.imread(filename)
+
+    # Crop the image based on ROI
+    x, y, w, h = roi
+    cropped_image = img[y:y + h, x:x + w]
+
+    # Convert to grayscale
+    gray_image = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
+
+    gray_image = cv2.medianBlur(gray_image, 3)
+    _, binary_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+    return binary_image
+
+def read_ocr_from_image(image, config=""):
+    return pytesseract.image_to_string(image, config=config)
 
 if __name__ == "__main__":
     config_data = read_config()
