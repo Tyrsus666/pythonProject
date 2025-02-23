@@ -231,7 +231,7 @@ def setup_excel():
     font.bold = True
     style.font = font
 
-    headers = ['Date', 'Kingdom', 'Governor Name', 'Governor ID', 'Power', 'Kill Points', 'Deads', 'Tier 1 Kills', 'Tier 2 Kills', 'Tier 3 Kills', 'Tier 4 Kills', 'Tier 5 Kills', 'Rss Assistance', 'Alliance Helps', 'Alliance','KvK Kills High', 'KvK Deads High', 'KvK Severely Wounds High']
+    headers = ['Date', 'Kingdom', 'Rank', 'Governor Name', 'Governor ID', 'Power', 'Kill Points', 'Deads', 'Tier 1 Kills', 'Tier 2 Kills', 'Tier 3 Kills', 'Tier 4 Kills', 'Tier 5 Kills', 'Rss Assistance', 'Alliance Helps', 'Alliance','KvK Kills High', 'KvK Deads High', 'KvK Severely Wounds High']
     for col, header in enumerate(headers):
         sheet1.write(0, col, header, style)
     return wb, sheet1
