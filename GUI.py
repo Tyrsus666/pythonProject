@@ -51,7 +51,6 @@ adb = '1'
 device = '1'
 
 
-
 def update_config(*args):
     config = configparser.ConfigParser()
     config.add_section('General')
@@ -61,21 +60,6 @@ def update_config(*args):
     with open('config.ini', 'w') as config_file:
         config.write(config_file)
 
-
-# def version_check(repo_owner, repo_name, local_version):
-#     url = f'https://api.github.com/repos/{repo_owner}/{repo_name}/releases/latest'
-#     response = requests.get(url)
-#     response.raise_for_status()
-#     release_data = response.json()
-#     github_version = release_data['name']
-    # if local_version != github_version:
-    #     button3 = ttk.Button(leftFrame, text='Update available',
-    #                          command=lambda: webbrowser.open("https://github.com/Tyrsus666/pythonProject"))
-    #     button3.grid(column=0, row=5, columnspan=2, pady=5)
-        # bo = tkinter.Tk()
-        # bo.withdraw()
-        # messagebox.showinfo('Tool is outdated', 'New Version can be found on Github.')
-        # bo.destroy()
 
 def tointcheck(element):
     try:
@@ -223,6 +207,7 @@ def gui():
 
     mainWin.mainloop()
 
+
 def setup_excel():
     wb = xlwt.Workbook()
     sheet1 = wb.add_sheet(str(today))
@@ -231,16 +216,20 @@ def setup_excel():
     font.bold = True
     style.font = font
 
-    headers = ['Date', 'Kingdom', 'Rank', 'Governor Name', 'Governor ID', 'Power', 'Kill Points', 'Deads', 'Tier 1 Kills', 'Tier 2 Kills', 'Tier 3 Kills', 'Tier 4 Kills', 'Tier 5 Kills', 'Rss Assistance', 'Alliance Helps', 'Alliance','KvK Kills High', 'KvK Deads High', 'KvK Severely Wounds High']
+    headers = ['Date', 'Kingdom', 'Rank', 'Governor Name', 'Governor ID', 'Power', 'Kill Points', 'Deads',
+               'Tier 1 Kills', 'Tier 2 Kills', 'Tier 3 Kills', 'Tier 4 Kills', 'Tier 5 Kills', 'Rss Assistance',
+               'Alliance Helps', 'Alliance', 'KvK Kills High', 'KvK Deads High', 'KvK Severely Wounds High']
     for col, header in enumerate(headers):
         sheet1.write(0, col, header, style)
     return wb, sheet1
+
 
 def capture_image(device, filename):
     image = device.screencap()
     with open(filename, 'wb') as f:
         f.write(image)
     return
+
 
 def random_time(max_pause: float):
     min_pause = max_pause * 2 / 3
@@ -295,9 +284,144 @@ def preprocess_image3(filename, roi):
 
     return binary_image
 
+
 def read_ocr_from_image(image, config=""):
     return pytesseract.image_to_string(image, config=config)
+
+
+def main_loop(device, sheet1):
+    stop = False
+    j = 0
+    try:
+        start_time = time.time()
+        for i in range(j, search_range + j):
+            if stop:
+                print("Scan Terminated! Saving the current progress...")
+                break
+
+            k = min(i, 4)
+            device.shell(f'input tap 690 {Y[k]}')
+            random_time(1.3)
+
+            # Open governor and ensure the tab is open
+            for _ in range(5):
+                capture_image(device, 'check_more_info.png')
+                check_more_info_image = preprocess_image('check_more_info.png', (294, 786, 116, 29))
+                if 'MoreInfo' in read_ocr_from_image(check_more_info_image, "-c tessedit_char_whitelist=MoreInfo"):
+                    break
+                device.shell(f'input swipe 690 605 690 540')
+                device.shell(f'input tap 690 {Y[k]}')
+                random_time(1.2)
+            # copy nickname
+            device.shell(f'input tap 654 245')
+            gov_id_image = preprocess_image2('check_more_info.png', (733, 192, 200, 35))
+            gov_id = read_ocr_from_image(gov_id_image, "-c tessedit_char_whitelist=0123456789")
+
+            gov_name = tk.Tk().clipboard_get()
+            # read kvk stats
+            device.shell(f'input tap 1226 486')
+            gov_killpoints_image = preprocess_image2('check_more_info.png', (1106, 327, 224, 40))
+            gov_killpoints = read_ocr_from_image(gov_killpoints_image, "-c tessedit_char_whitelist=0123456789")
+            random_time(0.5)
+            capture_image(device, 'kvk_stats.png')
+            gov_kills_high_image = preprocess_image('kvk_stats.png', (1000, 400, 165, 50))
+            gov_kills_high = read_ocr_from_image(gov_kills_high_image, "--psm 6 -c tessedit_char_whitelist=0123456789")
+
+            gov_power_image = preprocess_image2('check_more_info.png', (874, 327, 224, 40))
+            gov_power = read_ocr_from_image(gov_power_image, "--psm 6 -c tessedit_char_whitelist=0123456789")
+            random_time(0.5)
+            for _ in range(2):
+                device.shell(f'input tap 1118 314')
+                random_time(0.7)
+
+            alliance_tag_image = preprocess_image('check_more_info.png', (598, 331, 250, 40))
+            alliance_tag = read_ocr_from_image(alliance_tag_image)
+
+            gov_deads_high_image = preprocess_image('kvk_stats.png', (1000, 480, 199, 35))
+            gov_deads_high = read_ocr_from_image(gov_deads_high_image, "-c tessedit_char_whitelist=0123456789")
+
+            gov_sevs_high_image = preprocess_image('kvk_stats.png', (1000, 530, 199, 35))
+            gov_sevs_high = read_ocr_from_image(gov_sevs_high_image, "-c tessedit_char_whitelist=0123456789")
+
+            capture_image(device, 'kills_tier.png')
+            device.shell(f'input tap 350 740')
+
+            kills_tiers = []
+            for y in range(430, 630, 45):
+                kills_tiers_image = preprocess_image('kills_tier.png', (862, y, 215, 26))
+                kills_tiers.append(
+                    read_ocr_from_image(kills_tiers_image, "--psm 6 -c tessedit_char_whitelist=0123456789"))
+            random_time(0.5)
+            capture_image(device, 'more_info.png')
+            gov_dead_image = preprocess_image3('more_info.png', (1130, 443, 183, 40))
+            gov_dead = read_ocr_from_image(gov_dead_image, "--psm 6 -c tessedit_char_whitelist=0123456789")
+
+            gov_rss_assistance_image = preprocess_image3('more_info.png', (1130, 668, 183, 40))
+            gov_rss_assistance = read_ocr_from_image(gov_rss_assistance_image,
+                                                     "--psm 6 -c tessedit_char_whitelist=0123456789")
+
+            device.shell(f'input tap 1396 58')  # close more info
+
+            gov_helps_image = preprocess_image3('more_info.png', (1148, 732, 164, 44))
+            gov_alliance_helps = read_ocr_from_image(gov_helps_image, "--psm 6 -c tessedit_char_whitelist=0123456789")
+
+            # print(
+            #     f'Governor ID: {gov_id}Governor Name: {gov_name}\nGovernor Power: {tointprint(gov_power)}\nGovernor Killpoints: {tointprint(gov_killpoints)}\nTier 1 kills: {tointprint(kills_tiers[0])}\nTier 2 kills: {tointprint(kills_tiers[1])}\nTier 3 kills: {tointprint(kills_tiers[2])}\nTier 4 kills: {tointprint(kills_tiers[3])}\nTier 5 kills: {tointprint(kills_tiers[4])}\nGovernor Deads: {tointprint(gov_dead)}\nGovernor RSS Assistance: {tointprint(gov_rss_assistance)}\nGovernor Alliance Helps: {tointprint(gov_alliance_helps)}\nGovernor Alliance: {alliance_tag}Governor KvK High Kill: {tointprint(gov_kills_high)}\nGovernor KvK High Deads:{tointprint(gov_deads_high)}\nGovernor KvK High Severely Wounded:{tointprint(gov_sevs_high)}')
+
+            # Update progress bar
+            # print_progress_bar(i + 1 - j, search_range)
+            # random_time(0.5)
+
+            device.shell(f'input tap 1365 104')  # close governor info
+            # Write data to Excel
+            sheet1.write(i - j + 1, 0, gov_name)
+            sheet1.write(i - j + 1, 1, tointcheck(gov_id))
+            sheet1.write(i - j + 1, 2, tointcheck(gov_power))
+            sheet1.write(i - j + 1, 3, tointcheck(gov_killpoints))
+            sheet1.write(i - j + 1, 4, tointcheck(gov_dead))
+            sheet1.write(i - j + 1, 5, tointcheck(kills_tiers[0]))
+            sheet1.write(i - j + 1, 6, tointcheck(kills_tiers[1]))
+            sheet1.write(i - j + 1, 7, tointcheck(kills_tiers[2]))
+            sheet1.write(i - j + 1, 8, tointcheck(kills_tiers[3]))
+            sheet1.write(i - j + 1, 9, tointcheck(kills_tiers[4]))
+            sheet1.write(i - j + 1, 10, tointcheck(gov_rss_assistance))
+            sheet1.write(i - j + 1, 11, tointcheck(gov_alliance_helps))
+            sheet1.write(i - j + 1, 12, alliance_tag)
+            sheet1.write(i - j + 1, 13, tointcheck(gov_kills_high))
+            sheet1.write(i - j + 1, 14, tointcheck(gov_deads_high))
+            sheet1.write(i - j + 1, 15, tointcheck(gov_sevs_high))
+
+            # ETA
+            elapsed_time = time.time() - start_time
+            loops_completed = i + 1 - j
+            remaining_loops = search_range - loops_completed
+            average_time_per_loop = elapsed_time / loops_completed
+            estimated_remaining_time = remaining_loops * average_time_per_loop
+            estimated_remaining_minutes = estimated_remaining_time / 60
+            print(
+                f"Time running: {elapsed_time:.2f}s | Estimated remaining time: {estimated_remaining_minutes:.2f} mins\n")
+            print('----------------------------------------------------------------\n')
+
+            random_time(1)
+
+
+    except:
+        print(
+            'An issue has occured. Please rerun the tool and use "resume scan option" from where tool stopped. If issue seems to remain, please contact me on discord!')
+        # Save the excel file in the following format e.g. TOP300-2021-12-25-1253.xls or NEXT300-2021-12-25-1253.xls
+        traceback.print_exc()
+        pass
+    if resume_scanning:
+        file_name_prefix = 'NEXT'
+    else:
+        file_name_prefix = 'TOP'
+    wb.save(f'Governor_Scan_{file_name_prefix}-{search_range - j}_{kingdom}_{today}.xls')
+    print("Governor Scan Completed.")
+
 
 if __name__ == "__main__":
     config_data = read_config()
     gui()
+    device = adb_connection()
+    wb, sheet1 = setup_excel()
+    main_loop(device, sheet1)
